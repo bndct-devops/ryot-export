@@ -4,6 +4,15 @@ __pycache__/
 
 # Virtual Environment
 .venv/
+virtualenv/
+virtualenvs/
+venv/
+env/
+.env
 
 # Environment variables
 .env
+
+# IDE files
+.idea/
+.vscode/

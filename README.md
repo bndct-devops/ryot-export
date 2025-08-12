@@ -1,6 +1,11 @@
 # Ryot to InfluxDB Exporter
 
-This project provides a Python script to fetch workout data from the Ryot Fitness GraphQL API and store it in an InfluxDB instance for analysis and visualization with Grafana.
+## Features
+- Incremental sync: Only new workouts are imported.
+- Supports full reset and re-import.
+- Dry run mode for safe testing.
+- Docker and Unraid deployment ready.
+- Designed for easy integration with Grafana.
 
 ## How It Works
 
@@ -45,6 +50,9 @@ This prevents duplicate data and keeps your database up-to-date efficiently.
     *   `INFLUXDB_ORG`: Your InfluxDB organization.
     *   `INFLUXDB_BUCKET`: The target bucket in InfluxDB.
 
+### .env File Security
+**WARNING:** Never commit your `.env` file or any file containing secrets to version control. Exposing authentication tokens or sensitive credentials can compromise your accounts and data. Always store secrets securely and restrict access to trusted users only.
+
 ## Usage
 
 ### Standard Run
@@ -69,6 +77,12 @@ To test the script's connection and see a sample of the data it would fetch with
 ```bash
 DRY_RUN=true python fetch_workouts_from_ryot.py
 ```
+
+## Troubleshooting
+
+- **Authentication errors:** Double-check your `AUTH_TOKEN` and API URL.
+- **InfluxDB connection issues:** Verify your InfluxDB URL, token, org, and bucket.
+- **Docker environment variables:** Ensure your `.env` file is correctly mounted and formatted.
 
 ## Docker & Unraid Deployment
 

@@ -12,7 +12,31 @@ env/
 
 # Environment variables
 .env
+*.env.*
+
+# macOS metadata
+.DS_Store
 
 # IDE files
 .idea/
 .vscode/
+
+# Log files
+*.log
+
+# Database files
+*.sqlite3
+
+# Backup files
+*.bak
+
+# Vim swap files
+*.swp
+
+# Packaging / distributing
+dist/
+build/
+*.egg-info/
+
+bin/
+lib/

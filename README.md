@@ -17,7 +17,7 @@ The script creates two measurements in InfluxDB:
 
 2.  **`workouts`**: Detailed records for each set within an exercise.
     *   **Timestamp (`_time`)**: Set to the workout's `endTime`.
-        *   **Tags**: `workout_id`, `workout_name`, `exercise_name`, `muscle_<muscle_name>` (e.g., `muscle_chest`, `muscle_quads`).
+        *   **Tags**: `workout_id`, `workout_name`, `exercise_name` (the name of the exercise), `muscles` (comma-separated list of muscle groups, e.g., `QUADRICEPS,HAMSTRINGS`).
     *   **Fields**: `reps`, `weight`, `volume` (reps * weight), `set_number`, `workout_duration`.
 
 ### Execution Flow

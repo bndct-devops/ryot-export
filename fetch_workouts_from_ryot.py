@@ -32,7 +32,12 @@ def fetch_graphql_data(query, variables=None):
     try:
         response = requests.post(GRAPHQL_API_URL, headers=headers, json=payload)
         response.raise_for_status()
-        return response.json()
+        json_response = response.json()
+        if "errors" in json_response:
+            print("--- GraphQL API Error ---")
+            print(json.dumps(json_response, indent=2))
+            print("-------------------------")
+        return json_response
     except requests.exceptions.RequestException as e:
         print(f"Error fetching GraphQL data: {e}")
         return None
@@ -48,7 +53,7 @@ def get_workout_ids():
     }
     """
     data = fetch_graphql_data(query)
-    if data and "data" in data and "userWorkoutsList" in data["data"]:
+    if data and data.get("data") and data["data"].get("userWorkoutsList"):
         return data["data"]["userWorkoutsList"]["response"]["items"]
     return []
 
@@ -79,8 +84,22 @@ def get_workout_details(workout_id):
     """
     variables = {"workoutId": workout_id}
     data = fetch_graphql_data(query, variables)
-    if data and "data" in data and "userWorkoutDetails" in data["data"]:
+    if data and data.get("data") and data["data"].get("userWorkoutDetails"):
         return data["data"]["userWorkoutDetails"]
+    return None
+
+def get_exercise_details(exercise_id):
+    query = """
+    query ($exerciseId: String!) {
+      exerciseDetails(exerciseId: $exerciseId) {
+        muscles
+      }
+    }
+    """
+    variables = {"exerciseId": exercise_id}
+    data = fetch_graphql_data(query, variables)
+    if data and data.get("data") and data["data"].get("exerciseDetails"):
+        return data["data"]["exerciseDetails"]
     return None
 
 def parse_exercise_id(exercise_id):
@@ -89,7 +108,8 @@ def parse_exercise_id(exercise_id):
     return slugify(name)
 
 def slugify(text):
-    return re.sub(r"[^\w\s-]", "", text).strip().lower().replace(" ", "_")
+    # This regex is corrected to avoid the bad character range error
+    return re.sub(r'[^a-zA-Z0-9_\s-]', '', text).strip().lower().replace(" ", "_")
 
 def clear_influxdb_measurements(client):
     """Deletes all data from the workouts and workout_summary measurements."""
@@ -146,7 +166,7 @@ def main():
                 print(f"Starting fresh import of {len(workouts_to_process)} workouts.")
             else:
                 existing_workout_ids = get_existing_workout_ids(client)
-                print(f"Found {len(existing_workout_ids)} existing workout IDs in InfluxDB.")
+                print(f"Found {len(existing_existing_workout_ids)} existing workout IDs in InfluxDB.")
                 workouts_to_process = [id for id in source_workout_ids if id not in existing_workout_ids]
                 if not workouts_to_process:
                     print("No new workouts to import.")
@@ -182,10 +202,9 @@ def main():
                         exercise_id = exercise["id"]
                         exercise_name = parse_exercise_id(exercise_id)
                         muscles = []
-                        if exercise.get("lot") and exercise.get("lot").get("exerciseId"):
-                            exercise_details = get_exercise_details(exercise["lot"]["exerciseId"])
-                            if exercise_details and exercise_details.get("muscles"):
-                                muscles = exercise_details.get("muscles")
+                        exercise_details = get_exercise_details(exercise_id)
+                        if exercise_details and "muscles" in exercise_details:
+                            muscles = exercise_details["muscles"]
 
                         if "sets" in exercise:
                             for i, s in enumerate(exercise["sets"]):
@@ -198,8 +217,8 @@ def main():
                                 point.tag("workout_id", workout_id)
                                 point.tag("workout_name", workout_name)
                                 point.tag("exercise_name", exercise_name)
-                                for muscle in muscles:
-                                    point.tag(f"muscle_{muscle.lower()}", True)
+                                if muscles:
+                                    point.tag("muscles", ",".join(muscles))
                                 point.field("reps", reps)
                                 point.field("weight", weight)
                                 point.field("volume", volume)
